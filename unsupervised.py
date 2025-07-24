@@ -1,17 +1,36 @@
-from sklearn.datasets import make_blobs
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
-import pandas as pd
+from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
-import seaborn as sns
 
-X, _ = make_blobs(n_samples=100, centers=3, n_features=2, random_state=42)
-df = pd.DataFrame(X, columns=["TechWords", "PoliticsWords"])
+articles = [
+    "Team wins the football championship",
+    "New political reforms announced",
+    "Technology advances in AI",
+    "Player breaks scoring record",
+    "Parliament debates new law",
+    "Breakthrough in quantum computing"
+]
 
-kmeans = KMeans(n_clusters=3, random_state=42)
-df["Cluster"] = kmeans.fit_predict(X)
+vectorizer = TfidfVectorizer(stop_words='english')
+X = vectorizer.fit_transform(articles)
 
-plt.figure(figsize=(6, 4))
-sns.scatterplot(data=df, x="TechWords", y="PoliticsWords", hue="Cluster", palette="Set2")
-plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], color="black", marker="X")
-plt.title("Unsupervised Learning – News Article Clustering")
+kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
+labels = kmeans.fit_predict(X)
+
+tsne = TSNE(n_components=2, perplexity=2, random_state=42)
+X_2d = tsne.fit_transform(X.toarray())
+
+plt.figure(figsize=(8, 6))
+colors = ['red', 'green', 'blue']
+
+for i, (x, y) in enumerate(X_2d):
+    plt.scatter(x, y, color=colors[labels[i]], s=100)
+    plt.text(x + 0.02, y + 0.02, f"{i+1}: {articles[i][:30]}...", fontsize=8)
+
+plt.title("Unsupervised Clustering of News Articles")
+plt.xlabel("t-SNE Component 1")
+plt.ylabel("t-SNE Component 2")
+plt.grid(True)
+plt.tight_layout()
 plt.show()
